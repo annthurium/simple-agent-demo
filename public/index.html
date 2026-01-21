@@ -352,12 +352,17 @@
             border: 1px solid var(--neon-green);
             box-shadow: 0 0 15px rgba(5, 255, 161, 0.4);
             transition: all 0.3s;
-            cursor: default;
+            cursor: pointer;
         }
 
         .skill-chip:hover {
             box-shadow: 0 0 25px rgba(5, 255, 161, 0.7);
             transform: translateY(-2px);
+        }
+
+        .skill-chip:active {
+            transform: translateY(0);
+            box-shadow: 0 0 15px rgba(5, 255, 161, 0.4);
         }
 
         /* Responsive design */
@@ -425,11 +430,11 @@
                 <h2>◢ SYSTEM ONLINE ◣</h2>
                 <p>// AI INTERFACE INITIALIZED // SKILL MODULES LOADED //</p>
                 <div class="skills-list">
-                    <span class="skill-chip">▹ JOKE.EXE</span>
-                    <span class="skill-chip">▹ CALC.SYS</span>
-                    <span class="skill-chip">▹ DICE.APP</span>
-                    <span class="skill-chip">▹ CONV.MOD</span>
-                    <span class="skill-chip">▹ GREET.DLL</span>
+                    <span class="skill-chip" data-prompt="Tell me a programming joke">▹ JOKE.EXE</span>
+                    <span class="skill-chip" data-prompt="Calculate 42 * 137">▹ CALC.SYS</span>
+                    <span class="skill-chip" data-prompt="Roll 2d20">▹ DICE.APP</span>
+                    <span class="skill-chip" data-prompt="Convert 100 fahrenheit to celsius">▹ CONV.MOD</span>
+                    <span class="skill-chip" data-prompt="Greet me">▹ GREET.DLL</span>
                 </div>
             </div>
         </div>
@@ -459,6 +464,17 @@
         messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !isLoading) {
                 sendMessage();
+            }
+        });
+
+        // Skill chip click handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('skill-chip')) {
+                const prompt = e.target.getAttribute('data-prompt');
+                if (prompt) {
+                    messageInput.value = prompt;
+                    messageInput.focus();
+                }
             }
         });
 
