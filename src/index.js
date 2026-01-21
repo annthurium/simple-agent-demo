@@ -1,4 +1,4 @@
-import { query } from '@anthropic-ai/claude-agent-sdk';
+import Anthropic from '@anthropic-ai/sdk';
 import http from 'http';
 import fs from 'fs';
 import dotenv from 'dotenv';
@@ -35,10 +35,14 @@ if (ANTHROPIC_API_KEY.length < 20 || !ANTHROPIC_API_KEY.startsWith('sk-ant-')) {
   console.error('[STARTUP]   Actual starts with: ' + ANTHROPIC_API_KEY.substring(0, 10));
 }
 
+// Initialize Anthropic client
+const anthropic = new Anthropic({
+  apiKey: ANTHROPIC_API_KEY,
+});
+
 // Skills are loaded from .claude/skills/ directory
-// The SDK will discover them when settingSources includes 'project'
 const skillsDir = path.join(__dirname, '../.claude/skills');
-console.log(`Skills will be loaded from: ${skillsDir}`);
+console.log(`Skills directory: ${skillsDir}`);
 
 // Simple HTTP server to handle requests
 const server = http.createServer(async (req, res) => {
@@ -123,51 +127,51 @@ const server = http.createServer(async (req, res) => {
           console.log(`[AGENT] Processing request at ${new Date().toISOString()}`);
           console.log(`[AGENT] API key available: ${process.env.ANTHROPIC_API_KEY ? 'YES' : 'NO'}`);
 
-          // Use query() to interact with Claude with our custom skills
-          const result = query({
-            prompt: message,
-            options: {
-              permissionMode: 'bypassPermissions',
-              allowDangerouslySkipPermissions: true,
-              settingSources: ['project']
-            }
+          // Use Anthropic Messages API with streaming
+          const stream = anthropic.messages.stream({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1024,
+            messages: [{
+              role: 'user',
+              content: message
+            }]
           });
 
-          // Stream messages as they arrive
-          let finalResult = null;
-          let messageCount = 0;
+          let fullResponse = '';
+          let streamEventCount = 0;
 
-          for await (const msg of result) {
-            messageCount++;
-            console.log(`[AGENT] Received message ${messageCount}, type: ${msg.type}`);
+          // Handle streaming events
+          stream.on('text', (text) => {
+            streamEventCount++;
+            fullResponse += text;
+            // Send progress updates with text deltas
+            res.write(`data: ${JSON.stringify({ type: 'progress', text })}\n\n`);
+          });
 
-            // Send progress updates
-            res.write(`data: ${JSON.stringify({ type: 'progress', message: msg })}\n\n`);
-
-            if (msg.type === 'result') {
-              finalResult = msg;
-            }
-          }
-
-          console.log(`[AGENT] Query completed successfully with ${messageCount} messages`);
-
-          // Send final result
-          if (finalResult && finalResult.subtype === 'success') {
-            res.write(`data: ${JSON.stringify({
-              type: 'complete',
-              success: true,
-              response: finalResult.result,
-              usage: finalResult.usage,
-              cost_usd: finalResult.total_cost_usd
-            })}\n\n`);
-          } else {
-            console.error(`[AGENT] Query failed with subtype: ${finalResult?.subtype}`);
+          stream.on('error', (error) => {
+            console.error('[AGENT] Stream error:', error);
             res.write(`data: ${JSON.stringify({
               type: 'error',
               success: false,
-              error: finalResult?.errors || ['Unknown error occurred']
+              error: error.message
             })}\n\n`);
-          }
+          });
+
+          // Wait for stream to complete
+          const finalMessage = await stream.finalMessage();
+
+          console.log(`[AGENT] Stream completed with ${streamEventCount} events`);
+          console.log(`[AGENT] Usage:`, finalMessage.usage);
+
+          // Send final result
+          res.write(`data: ${JSON.stringify({
+            type: 'complete',
+            success: true,
+            response: fullResponse,
+            usage: finalMessage.usage,
+            model: finalMessage.model
+          })}\n\n`);
+
         } catch (error) {
           console.error('[AGENT] Exception during query:', {
             message: error.message,
