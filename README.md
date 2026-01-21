@@ -1,11 +1,16 @@
 # Simple Agent Demo
 
-A minimal demonstration of an agent using the Claude Agent SDK with skills, deployable to DigitalOcean.
+A minimal demonstration of an agent using the Claude Agent SDK with SKILL.md files, deployable to DigitalOcean.
 
 ## Features
 
 - Simple HTTP API server
-- Two example skills (greeting and calculator)
+- Five example skills using the official SKILL.md format:
+  - **greeting** - Generate friendly greetings
+  - **calculator** - Perform arithmetic operations
+  - **dice-roller** - Roll dice (1d20, 3d6+4, etc.)
+  - **unit-converter** - Convert units (temperature, distance, weight, volume)
+  - **joke-generator** - Tell jokes from various categories
 - Health check endpoint
 - Docker containerization
 - DigitalOcean App Platform configuration
@@ -66,45 +71,56 @@ List available skills.
   "skills": [
     {
       "name": "greeting",
-      "description": "Greets the user with a friendly message"
+      "description": "Generate a friendly greeting message"
     },
     {
       "name": "calculator",
-      "description": "Performs basic math operations"
+      "description": "Perform basic arithmetic operations"
+    },
+    {
+      "name": "dice-roller",
+      "description": "Roll virtual dice in various combinations"
+    },
+    {
+      "name": "unit-converter",
+      "description": "Convert between different units of measurement"
+    },
+    {
+      "name": "joke-generator",
+      "description": "Generate jokes from various categories"
     }
   ]
 }
 ```
 
 ### POST /agent
-Interact with the agent.
+Interact with the agent using natural language.
 
-**Request (using a skill directly):**
+**Request:**
 ```json
 {
-  "skill": "greeting",
-  "params": {
-    "name": "Alice"
-  }
+  "message": "Can you roll 3d6 for me?"
 }
 ```
 
-**Request (calculator skill):**
+**Request:**
 ```json
 {
-  "skill": "calculator",
-  "params": {
-    "operation": "add",
-    "a": 10,
-    "b": 5
-  }
+  "message": "What's 125 divided by 5?"
 }
 ```
 
-**Request (let agent decide):**
+**Request:**
 ```json
 {
-  "message": "Can you greet me?"
+  "message": "Convert 100 celsius to fahrenheit"
+}
+```
+
+**Request:**
+```json
+{
+  "message": "Tell me a programming joke"
 }
 ```
 
@@ -119,15 +135,30 @@ curl http://localhost:3000/health
 # List skills
 curl http://localhost:3000/skills
 
-# Use greeting skill
+# Ask the agent to use a skill
 curl -X POST http://localhost:3000/agent \
   -H "Content-Type: application/json" \
-  -d '{"skill":"greeting","params":{"name":"Alice"}}'
+  -d '{"message":"Greet me please!"}'
 
-# Use calculator skill
+# Use calculator
 curl -X POST http://localhost:3000/agent \
   -H "Content-Type: application/json" \
-  -d '{"skill":"calculator","params":{"operation":"multiply","a":7,"b":6}}'
+  -d '{"message":"What is 7 times 6?"}'
+
+# Roll dice
+curl -X POST http://localhost:3000/agent \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Roll 2d20+5 for me"}'
+
+# Convert units
+curl -X POST http://localhost:3000/agent \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Convert 5 miles to kilometers"}'
+
+# Get a joke
+curl -X POST http://localhost:3000/agent \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Tell me a dad joke"}'
 ```
 
 ## Deploy to DigitalOcean
@@ -219,12 +250,21 @@ curl -X POST $APP_URL/agent \
 
 ```
 simple-agent-demo/
+├── .claude/
+│   └── skills/           # Skills directory (Claude Code format)
+│       ├── calculator/
+│       │   └── SKILL.md
+│       ├── greeting/
+│       │   └── SKILL.md
+│       ├── dice-roller/
+│       │   └── SKILL.md
+│       ├── unit-converter/
+│       │   └── SKILL.md
+│       └── joke-generator/
+│           └── SKILL.md
 ├── .do/
 │   └── app.yaml          # DigitalOcean App Platform config
 ├── src/
-│   ├── skills/
-│   │   ├── greeting.js   # Greeting skill
-│   │   └── calculator.js # Calculator skill
 │   └── index.js          # Main application
 ├── .env.example          # Environment template
 ├── .gitignore
@@ -235,32 +275,37 @@ simple-agent-demo/
 
 ## Adding New Skills
 
-Create a new skill in [src/skills/](src/skills/):
+Skills use the official Claude Code SKILL.md format. Create a new directory in `.claude/skills/` with a `SKILL.md` file:
 
-```javascript
-export const mySkill = {
-  name: 'my-skill',
-  description: 'What this skill does',
+```markdown
+# My Skill
 
-  async execute(params) {
-    // Your skill logic here
-    return {
-      result: 'some value'
-    };
-  }
-};
+Brief description of what this skill does.
+
+## Usage
+
+Call this skill to do something:
+- `/my-skill arg1 arg2`
+
+## Examples
+
+\```
+User: /my-skill hello
+Result: Processed 'hello'
+\```
+
+## Instructions
+
+When this skill is invoked:
+
+1. Parse the arguments
+2. Perform the operation
+3. Return the result in a clear format
 ```
 
-Then import and add it to the agent in [src/index.js](src/index.js):
+The skill will be automatically discovered by Claude Code when the agent starts.
 
-```javascript
-import { mySkill } from './skills/my-skill.js';
-
-const agent = new Agent({
-  apiKey: ANTHROPIC_API_KEY,
-  skills: [greetingSkill, calculatorSkill, mySkill]
-});
-```
+For more information on the SKILL.md format, see: https://code.claude.com/docs/en/skills
 
 ## Cost Estimation
 

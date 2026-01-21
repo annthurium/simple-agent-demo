@@ -1,10 +1,14 @@
-import { query, createSdkMcpServer, tool } from '@anthropic-ai/claude-agent-sdk';
-import { z } from 'zod';
+import { query } from '@anthropic-ai/claude-agent-sdk';
 import http from 'http';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Load environment variables from .env file
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const PORT = process.env.PORT || 3000;
@@ -14,68 +18,10 @@ if (!ANTHROPIC_API_KEY) {
   process.exit(1);
 }
 
-// Define skills as MCP tools
-const greetingTool = tool(
-  'greeting',
-  'Generate a friendly greeting message',
-  {
-    name: z.string().describe('The name of the person to greet')
-  },
-  async ({ name }) => {
-    return {
-      content: [{
-        type: 'text',
-        text: `Hello, ${name}! Welcome to the Simple Agent Demo!`
-      }]
-    };
-  }
-);
-
-const calculatorTool = tool(
-  'calculator',
-  'Perform basic arithmetic operations',
-  {
-    operation: z.enum(['add', 'subtract', 'multiply', 'divide']).describe('The operation to perform'),
-    a: z.number().describe('First number'),
-    b: z.number().describe('Second number')
-  },
-  async ({ operation, a, b }) => {
-    let result;
-    switch (operation) {
-      case 'add':
-        result = a + b;
-        break;
-      case 'subtract':
-        result = a - b;
-        break;
-      case 'multiply':
-        result = a * b;
-        break;
-      case 'divide':
-        if (b === 0) {
-          return {
-            content: [{ type: 'text', text: 'Error: Division by zero' }],
-            isError: true
-          };
-        }
-        result = a / b;
-        break;
-    }
-    return {
-      content: [{
-        type: 'text',
-        text: `Result: ${a} ${operation} ${b} = ${result}`
-      }]
-    };
-  }
-);
-
-// Create MCP server with tools
-const mcpServer = createSdkMcpServer({
-  name: 'simple-agent-demo-server',
-  version: '1.0.0',
-  tools: [greetingTool, calculatorTool]
-});
+// Skills are loaded from .claude/skills/ directory
+// The SDK will discover them when settingSources includes 'project'
+const skillsDir = path.join(__dirname, '../.claude/skills');
+console.log(`Skills will be loaded from: ${skillsDir}`);
 
 // Simple HTTP server to handle requests
 const server = http.createServer(async (req, res) => {
@@ -104,15 +50,14 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // Use query() to interact with Claude with our custom tools
+        // Use query() to interact with Claude with our custom skills
+        // Skills are loaded from .claude/skills/ when settingSources includes 'project'
         const result = query({
           prompt: message,
           options: {
-            mcpServers: {
-              'simple-agent-demo': mcpServer
-            },
             permissionMode: 'bypassPermissions',
-            allowDangerouslySkipPermissions: true
+            allowDangerouslySkipPermissions: true,
+            settingSources: ['project']  // Enable loading skills from .claude/skills/
           }
         });
 
@@ -153,12 +98,15 @@ const server = http.createServer(async (req, res) => {
 
   // List skills endpoint
   if (req.url === '/skills' && req.method === 'GET') {
-    const skills = [
+    const availableSkills = [
       { name: 'greeting', description: 'Generate a friendly greeting message' },
-      { name: 'calculator', description: 'Perform basic arithmetic operations' }
+      { name: 'calculator', description: 'Perform basic arithmetic operations' },
+      { name: 'dice-roller', description: 'Roll virtual dice in various combinations' },
+      { name: 'unit-converter', description: 'Convert between different units of measurement' },
+      { name: 'joke-generator', description: 'Generate jokes from various categories' }
     ];
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ skills }));
+    res.end(JSON.stringify({ skills: availableSkills }));
     return;
   }
 
