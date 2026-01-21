@@ -489,12 +489,6 @@
             messageInput.value = '';
             setLoading(true);
 
-            // Remove welcome message if present
-            const welcomeMessage = chatContainer.querySelector('.welcome-message');
-            if (welcomeMessage) {
-                welcomeMessage.remove();
-            }
-
             // Add user message
             addMessageToChat('user', message);
 
