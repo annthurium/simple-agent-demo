@@ -1,44 +1,10 @@
-# Unit Converter
+---
+name: unit-converter
+description: Convert between different units of measurement for temperature, distance, weight, and volume. Use when the user asks to convert units or measurements.
+argument-hint: <value> <from-unit> to <to-unit>
+---
 
-Convert between different units of measurement for temperature, distance, weight, volume, and more.
-
-## Usage
-
-Call this skill to convert units:
-- `/unit-converter 100 celsius to fahrenheit`
-- `/unit-converter 5 miles to kilometers`
-- `/unit-converter 10 pounds to kilograms`
-- `/unit-converter 2 gallons to liters`
-
-## Supported Conversions
-
-**Temperature:**
-- Celsius ↔ Fahrenheit ↔ Kelvin
-
-**Distance:**
-- Meters, Kilometers, Miles, Feet, Inches, Yards
-
-**Weight/Mass:**
-- Grams, Kilograms, Pounds, Ounces, Tons
-
-**Volume:**
-- Liters, Milliliters, Gallons, Cups, Tablespoons, Teaspoons
-
-## Examples
-
-```
-User: /unit-converter 100 celsius to fahrenheit
-Result: 100°C = 212°F
-```
-
-```
-User: /unit-converter 5 miles to kilometers
-Result: 5 miles = 8.05 kilometers
-```
-
-## Instructions
-
-When this skill is invoked:
+When this skill is invoked with $ARGUMENTS:
 
 1. Parse the arguments to extract:
    - Value (the number to convert)
@@ -71,3 +37,22 @@ When this skill is invoked:
 4. Format the result clearly with appropriate units and precision (2-3 decimal places)
 
 5. If the unit is not supported, list the available units for that category
+
+## Supported Conversions
+
+**Temperature:** Celsius ↔ Fahrenheit ↔ Kelvin
+**Distance:** Meters, Kilometers, Miles, Feet, Inches, Yards
+**Weight/Mass:** Grams, Kilograms, Pounds, Ounces, Tons
+**Volume:** Liters, Milliliters, Gallons, Cups, Tablespoons, Teaspoons
+
+## Examples
+
+```
+User: /unit-converter 100 celsius to fahrenheit
+Result: 100°C = 212°F
+```
+
+```
+User: /unit-converter 5 miles to kilometers
+Result: 5 miles = 8.05 kilometers
+```

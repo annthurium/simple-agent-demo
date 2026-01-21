@@ -278,14 +278,17 @@ simple-agent-demo/
 Skills use the official Claude Code SKILL.md format. Create a new directory in `.claude/skills/` with a `SKILL.md` file:
 
 ```markdown
-# My Skill
+---
+name: my-skill
+description: Brief description of what this skill does and when to use it. Claude uses this to decide when to apply the skill automatically.
+argument-hint: <arg1> <arg2>
+---
 
-Brief description of what this skill does.
+When this skill is invoked with $ARGUMENTS:
 
-## Usage
-
-Call this skill to do something:
-- `/my-skill arg1 arg2`
+1. Parse the arguments
+2. Perform the operation
+3. Return the result in a clear format
 
 ## Examples
 
@@ -293,15 +296,20 @@ Call this skill to do something:
 User: /my-skill hello
 Result: Processed 'hello'
 \```
-
-## Instructions
-
-When this skill is invoked:
-
-1. Parse the arguments
-2. Perform the operation
-3. Return the result in a clear format
 ```
+
+### YAML Frontmatter Fields
+
+- `name` - The skill name (becomes the `/slash-command`)
+- `description` - What the skill does and when to use it (helps Claude decide when to auto-invoke)
+- `argument-hint` - Hint for expected arguments (e.g., `<filename>` or `[optional-arg]`)
+- `disable-model-invocation` - Set to `true` to prevent auto-invocation
+- `user-invocable` - Set to `false` to hide from the `/` menu
+
+### String Substitutions
+
+- `$ARGUMENTS` - All arguments passed when invoking the skill
+- `${CLAUDE_SESSION_ID}` - The current session ID
 
 The skill will be automatically discovered by Claude Code when the agent starts.
 

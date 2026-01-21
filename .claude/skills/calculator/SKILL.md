@@ -1,32 +1,10 @@
-# Calculator
+---
+name: calculator
+description: Perform basic arithmetic operations (addition, subtraction, multiplication, division). Use when the user asks to calculate or solve math problems.
+argument-hint: <operation> <number1> <number2>
+---
 
-Perform basic arithmetic operations (addition, subtraction, multiplication, division).
-
-## Usage
-
-Call this skill to perform mathematical calculations:
-- `/calculator add 5 3`
-- `/calculator multiply 10 7`
-- `/calculator divide 100 4`
-- `/calculator subtract 50 23`
-
-## Examples
-
-**Addition:**
-```
-User: /calculator add 15 27
-Result: 15 + 27 = 42
-```
-
-**Division:**
-```
-User: /calculator divide 144 12
-Result: 144 ÷ 12 = 12
-```
-
-## Instructions
-
-When this skill is invoked:
+When this skill is invoked with $ARGUMENTS:
 
 1. Parse the arguments to extract:
    - `operation`: one of "add", "subtract", "multiply", or "divide"
@@ -47,3 +25,17 @@ When this skill is invoked:
    - If operation is not recognized, list the available operations
 
 5. Present the result in a clear, readable format
+
+## Examples
+
+**Addition:**
+```
+User: /calculator add 15 27
+Result: 15 + 27 = 42
+```
+
+**Division:**
+```
+User: /calculator divide 144 12
+Result: 144 ÷ 12 = 12
+```

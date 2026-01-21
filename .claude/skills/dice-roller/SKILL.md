@@ -1,30 +1,10 @@
-# Dice Roller
+---
+name: dice-roller
+description: Roll virtual dice in various combinations using standard RPG notation (1d20, 3d6+4, etc.). Perfect for tabletop gaming, random number generation, or making decisions. Use when the user asks to roll dice.
+argument-hint: <XdY+Z>
+---
 
-Roll virtual dice in various combinations, perfect for tabletop gaming, random number generation, or making decisions.
-
-## Usage
-
-Call this skill to roll dice:
-- `/dice-roller 1d20` - Roll one 20-sided die
-- `/dice-roller 3d6` - Roll three 6-sided dice
-- `/dice-roller 2d10+5` - Roll two 10-sided dice and add 5
-- `/dice-roller 4d8-2` - Roll four 8-sided dice and subtract 2
-
-## Examples
-
-```
-User: /dice-roller 1d20
-Result: 🎲 Rolling 1d20: [17] = 17
-```
-
-```
-User: /dice-roller 3d6+4
-Result: 🎲 Rolling 3d6+4: [4, 2, 5] + 4 = 15
-```
-
-## Instructions
-
-When this skill is invoked:
+When this skill is invoked with $ARGUMENTS:
 
 1. Parse the dice notation (e.g., "2d6+3"):
    - Number of dice (before 'd')
@@ -49,3 +29,15 @@ When this skill is invoked:
    - Present the final total
 
 5. Add a dice emoji 🎲 to make it fun!
+
+## Examples
+
+```
+User: /dice-roller 1d20
+Result: 🎲 Rolling 1d20: [17] = 17
+```
+
+```
+User: /dice-roller 3d6+4
+Result: 🎲 Rolling 3d6+4: [4, 2, 5] + 4 = 15
+```

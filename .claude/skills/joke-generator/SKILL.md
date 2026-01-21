@@ -1,38 +1,10 @@
-# Joke Generator
+---
+name: joke-generator
+description: Generate jokes from various categories (programming, dad, science, general) to bring some humor. Use when the user asks for a joke or wants to lighten the mood.
+argument-hint: [category]
+---
 
-Generate jokes from various categories to bring some humor to your day.
-
-## Usage
-
-Call this skill to hear a joke:
-- `/joke-generator` - Random joke
-- `/joke-generator programming` - Programming joke
-- `/joke-generator dad` - Dad joke
-- `/joke-generator science` - Science joke
-
-## Categories
-
-- **programming** - Developer and coding humor
-- **dad** - Classic groan-worthy dad jokes
-- **science** - Jokes about science and scientists
-- **general** - General clean humor
-- **random** - Pick any category randomly
-
-## Examples
-
-```
-User: /joke-generator programming
-Result: Why do programmers prefer dark mode? Because light attracts bugs! 🐛
-```
-
-```
-User: /joke-generator dad
-Result: I'm afraid for the calendar. Its days are numbered! 😄
-```
-
-## Instructions
-
-When this skill is invoked:
+When this skill is invoked with $ARGUMENTS:
 
 1. Determine the joke category:
    - If specified, use that category
@@ -67,3 +39,23 @@ When this skill is invoked:
 4. If the user requests a category that doesn't exist, list available categories
 
 5. Keep it light and fun!
+
+## Categories
+
+- **programming** - Developer and coding humor
+- **dad** - Classic groan-worthy dad jokes
+- **science** - Jokes about science and scientists
+- **general** - General clean humor
+- **random** - Pick any category randomly
+
+## Examples
+
+```
+User: /joke-generator programming
+Result: Why do programmers prefer dark mode? Because light attracts bugs! 🐛
+```
+
+```
+User: /joke-generator dad
+Result: I'm afraid for the calendar. Its days are numbered! 😄
+```
