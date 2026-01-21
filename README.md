@@ -4,6 +4,7 @@ A minimal demonstration of an agent using the Claude Agent SDK with SKILL.md fil
 
 ## Features
 
+- **Web-based chat interface** - Interactive UI to chat with the agent
 - Simple HTTP API server
 - Five example skills using the official SKILL.md format:
   - **greeting** - Generate friendly greetings
@@ -48,6 +49,26 @@ Or use watch mode for development:
 ```bash
 npm run dev
 ```
+
+5. Open your browser:
+```
+http://localhost:3000
+```
+
+You'll see a chat interface where you can interact with the agent using natural language.
+
+## Using the Web Interface
+
+The web interface at `http://localhost:3000` provides a clean chat UI to interact with the agent. Simply type your message and press Enter or click Send.
+
+**Try these example messages:**
+- "Tell me a programming joke"
+- "What's 42 times 13?"
+- "Roll 3d6+4 for me"
+- "Convert 100 celsius to fahrenheit"
+- "Greet Sarah"
+
+The agent will automatically invoke the appropriate skill based on your request.
 
 ## API Endpoints
 
@@ -231,8 +252,12 @@ docker push your-username/simple-agent-demo
 
 ## Testing the Deployed App
 
-Once deployed, DigitalOcean will provide you with a URL. Test it:
+Once deployed, DigitalOcean will provide you with a URL (e.g., `https://your-app.ondigitalocean.app`).
 
+**Web Interface:**
+Simply open the URL in your browser to use the chat interface.
+
+**API Testing:**
 ```bash
 # Replace with your actual URL
 export APP_URL=https://your-app.ondigitalocean.app
@@ -240,16 +265,18 @@ export APP_URL=https://your-app.ondigitalocean.app
 # Health check
 curl $APP_URL/health
 
-# Test calculator skill
+# Test agent endpoint
 curl -X POST $APP_URL/agent \
   -H "Content-Type: application/json" \
-  -d '{"skill":"calculator","params":{"operation":"add","a":15,"b":27}}'
+  -d '{"message":"What is 15 plus 27?"}'
 ```
 
 ## Project Structure
 
 ```
 simple-agent-demo/
+├── public/
+│   └── index.html        # Web chat interface
 ├── .claude/
 │   └── skills/           # Skills directory (Claude Code format)
 │       ├── calculator/

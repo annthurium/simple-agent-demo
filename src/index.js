@@ -1,5 +1,6 @@
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import http from 'http';
+import fs from 'fs';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,6 +26,32 @@ console.log(`Skills will be loaded from: ${skillsDir}`);
 
 // Simple HTTP server to handle requests
 const server = http.createServer(async (req, res) => {
+  // Add CORS headers to all responses
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle OPTIONS preflight requests
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  // Serve index.html for root and /index.html
+  if ((req.url === '/' || req.url === '/index.html') && req.method === 'GET') {
+    const indexPath = path.join(__dirname, '../public/index.html');
+    try {
+      const content = fs.readFileSync(indexPath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(content);
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to load index.html' }));
+    }
+    return;
+  }
+
   // Health check endpoint
   if (req.url === '/health' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -115,6 +142,7 @@ const server = http.createServer(async (req, res) => {
   res.end(JSON.stringify({
     error: 'Not found',
     availableEndpoints: [
+      'GET / - Web interface',
       'GET /health',
       'GET /skills',
       'POST /agent'
@@ -124,7 +152,8 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Simple Agent Demo running on port ${PORT}`);
-  console.log(`Available endpoints:`);
+  console.log(`\nWeb interface: http://localhost:${PORT}`);
+  console.log(`\nAPI endpoints:`);
   console.log(`  GET  /health - Health check`);
   console.log(`  GET  /skills - List available skills`);
   console.log(`  POST /agent  - Interact with agent`);
