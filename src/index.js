@@ -14,9 +14,25 @@ const __dirname = path.dirname(__filename);
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const PORT = process.env.PORT || 3000;
 
+// Enhanced diagnostics
+const API_KEY_STATUS = ANTHROPIC_API_KEY ?
+  `SET (length: ${ANTHROPIC_API_KEY.length}, starts with: ${ANTHROPIC_API_KEY.substring(0, 7)}...)` :
+  'NOT SET';
+
+console.log(`[STARTUP] Environment diagnostics:`);
+console.log(`[STARTUP]   NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`[STARTUP]   PORT: ${PORT}`);
+console.log(`[STARTUP]   ANTHROPIC_API_KEY: ${API_KEY_STATUS}`);
+
 if (!ANTHROPIC_API_KEY) {
-  console.error('Error: ANTHROPIC_API_KEY environment variable is required');
+  console.error('[STARTUP] FATAL: ANTHROPIC_API_KEY environment variable is required');
   process.exit(1);
+}
+
+if (ANTHROPIC_API_KEY.length < 20 || !ANTHROPIC_API_KEY.startsWith('sk-ant-')) {
+  console.error('[STARTUP] WARNING: ANTHROPIC_API_KEY appears invalid (wrong format or too short)');
+  console.error('[STARTUP]   Expected format: sk-ant-api03-...');
+  console.error('[STARTUP]   Actual starts with: ' + ANTHROPIC_API_KEY.substring(0, 10));
 }
 
 // Skills are loaded from .claude/skills/ directory
@@ -54,8 +70,22 @@ const server = http.createServer(async (req, res) => {
 
   // Health check endpoint
   if (req.url === '/health' && req.method === 'GET') {
+    const apiKeySet = !!process.env.ANTHROPIC_API_KEY;
+    const apiKeyValid = apiKeySet &&
+                        process.env.ANTHROPIC_API_KEY.length > 20 &&
+                        process.env.ANTHROPIC_API_KEY.startsWith('sk-ant-');
+
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'healthy', timestamp: new Date().toISOString() }));
+    res.end(JSON.stringify({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      config: {
+        apiKeySet,
+        apiKeyValid,
+        nodeEnv: process.env.NODE_ENV,
+        port: process.env.PORT
+      }
+    }));
     return;
   }
 
@@ -90,6 +120,9 @@ const server = http.createServer(async (req, res) => {
         }, 10000);
 
         try {
+          console.log(`[AGENT] Processing request at ${new Date().toISOString()}`);
+          console.log(`[AGENT] API key available: ${process.env.ANTHROPIC_API_KEY ? 'YES' : 'NO'}`);
+
           // Use query() to interact with Claude with our custom skills
           const result = query({
             prompt: message,
@@ -102,8 +135,12 @@ const server = http.createServer(async (req, res) => {
 
           // Stream messages as they arrive
           let finalResult = null;
+          let messageCount = 0;
 
           for await (const msg of result) {
+            messageCount++;
+            console.log(`[AGENT] Received message ${messageCount}, type: ${msg.type}`);
+
             // Send progress updates
             res.write(`data: ${JSON.stringify({ type: 'progress', message: msg })}\n\n`);
 
@@ -111,6 +148,8 @@ const server = http.createServer(async (req, res) => {
               finalResult = msg;
             }
           }
+
+          console.log(`[AGENT] Query completed successfully with ${messageCount} messages`);
 
           // Send final result
           if (finalResult && finalResult.subtype === 'success') {
@@ -122,6 +161,7 @@ const server = http.createServer(async (req, res) => {
               cost_usd: finalResult.total_cost_usd
             })}\n\n`);
           } else {
+            console.error(`[AGENT] Query failed with subtype: ${finalResult?.subtype}`);
             res.write(`data: ${JSON.stringify({
               type: 'error',
               success: false,
@@ -129,7 +169,22 @@ const server = http.createServer(async (req, res) => {
             })}\n\n`);
           }
         } catch (error) {
-          console.error('Error processing request:', error);
+          console.error('[AGENT] Exception during query:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack,
+            timestamp: new Date().toISOString()
+          });
+
+          // Check if it's an authentication error
+          const isAuthError = error.message?.toLowerCase().includes('auth') ||
+                              error.message?.toLowerCase().includes('401') ||
+                              error.message?.toLowerCase().includes('api key');
+
+          if (isAuthError) {
+            console.error('[AGENT] AUTHENTICATION ERROR DETECTED - Check ANTHROPIC_API_KEY configuration');
+          }
+
           res.write(`data: ${JSON.stringify({
             type: 'error',
             success: false,
