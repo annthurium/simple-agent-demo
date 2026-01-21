@@ -59,7 +59,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Agent endpoint
+  // Agent endpoint with streaming support
   if (req.url === '/agent' && req.method === 'POST') {
     let body = '';
 
@@ -77,45 +77,70 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // Use query() to interact with Claude with our custom skills
-        // Skills are loaded from .claude/skills/ when settingSources includes 'project'
-        const result = query({
-          prompt: message,
-          options: {
-            permissionMode: 'bypassPermissions',
-            allowDangerouslySkipPermissions: true,
-            settingSources: ['project']  // Enable loading skills from .claude/skills/
-          }
+        // Set up SSE for streaming responses
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
         });
 
-        // Collect all messages from the async generator
-        const messages = [];
-        let finalResult = null;
+        // Send keepalive every 10 seconds to prevent timeout
+        const keepaliveInterval = setInterval(() => {
+          res.write(': keepalive\n\n');
+        }, 10000);
 
-        for await (const msg of result) {
-          messages.push(msg);
-          if (msg.type === 'result') {
-            finalResult = msg;
+        try {
+          // Use query() to interact with Claude with our custom skills
+          const result = query({
+            prompt: message,
+            options: {
+              permissionMode: 'bypassPermissions',
+              allowDangerouslySkipPermissions: true,
+              settingSources: ['project']
+            }
+          });
+
+          // Stream messages as they arrive
+          let finalResult = null;
+
+          for await (const msg of result) {
+            // Send progress updates
+            res.write(`data: ${JSON.stringify({ type: 'progress', message: msg })}\n\n`);
+
+            if (msg.type === 'result') {
+              finalResult = msg;
+            }
           }
-        }
 
-        if (finalResult && finalResult.subtype === 'success') {
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({
-            success: true,
-            response: finalResult.result,
-            usage: finalResult.usage,
-            cost_usd: finalResult.total_cost_usd
-          }));
-        } else {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({
+          // Send final result
+          if (finalResult && finalResult.subtype === 'success') {
+            res.write(`data: ${JSON.stringify({
+              type: 'complete',
+              success: true,
+              response: finalResult.result,
+              usage: finalResult.usage,
+              cost_usd: finalResult.total_cost_usd
+            })}\n\n`);
+          } else {
+            res.write(`data: ${JSON.stringify({
+              type: 'error',
+              success: false,
+              error: finalResult?.errors || ['Unknown error occurred']
+            })}\n\n`);
+          }
+        } catch (error) {
+          console.error('Error processing request:', error);
+          res.write(`data: ${JSON.stringify({
+            type: 'error',
             success: false,
-            error: finalResult?.errors || ['Unknown error occurred']
-          }));
+            error: error.message
+          })}\n\n`);
+        } finally {
+          clearInterval(keepaliveInterval);
+          res.end();
         }
       } catch (error) {
-        console.error('Error processing request:', error);
+        console.error('Error parsing request:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: error.message }));
       }
