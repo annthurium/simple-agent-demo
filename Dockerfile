@@ -6,10 +6,12 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm install --only=production --legacy-peer-deps
 
 # Copy application files
 COPY src ./src
+COPY public ./public
+COPY .claude ./.claude
 
 # Expose port
 EXPOSE 3000
