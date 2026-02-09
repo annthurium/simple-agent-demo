@@ -2,6 +2,19 @@
 
 A minimal demonstration of an agent using the Claude Agent SDK with SKILL.md files, deployable to DigitalOcean.
 
+## What Are Agent Skills?
+
+An agent skill is a markdown file (`SKILL.md`) that teaches an agent how to perform a specific task — entirely through natural language instructions. The agent follows those instructions when the skill is relevant.
+
+Each skill lives in its own directory under `.claude/skills/` and is automatically discovered at startup. When a user sends a message like "roll 3d6+4", the agent recognizes that the `dice-roller` skill is relevant, reads its instructions, and follows them to produce a result. Users can also invoke skills explicitly with slash commands (e.g., `/calculator add 15 27`).
+
+### Why use skills?
+
+
+- **Modular by design.** Each skill is a self-contained file. Add a new capability by dropping in a new folder. Remove one by deleting it. Skills don't depend on each other or on application code.
+- **Context management.** Context windows have expanded a lot, but as of the time of this writing they are still finite. Since skills are only invoked when needed, they help keep systems prompts small and manage system complexity. That way you can keep compute costs low and scale agent capabilities without linearly growing your base prompt size.
+- **Automatic invocation.** The agent reads each skill's `description` field and decides on its own when to use it. You don't need to write routing logic or intent classifiers.
+
 ## Features
 
 - **Web-based chat interface** - Interactive UI to chat with the agent
