@@ -210,7 +210,6 @@ const server = http.createServer(async (req, res) => {
   // List skills endpoint
   if (req.url === '/skills' && req.method === 'GET') {
     const availableSkills = [
-      { name: 'greeting', description: 'Generate a friendly greeting message' },
       { name: 'calculator', description: 'Perform basic arithmetic operations' },
       { name: 'dice-roller', description: 'Roll virtual dice in various combinations' },
       { name: 'unit-converter', description: 'Convert between different units of measurement' },
